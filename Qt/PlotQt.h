@@ -8,9 +8,9 @@
 #include <QWidget>
 #include <QPainter>
 #include <QMouseEvent>
-#include <QPrinter>
-#include "Plot.h"
-#include "Plottables.h"
+//#include <QPrinter>
+#include "Plot/Plot.h"
+#include "Plot/Plottables.h"
 
 namespace Plot {
     class TPixmap : public QPixmap{
@@ -260,7 +260,7 @@ template <typename TBasePlot>
 bool TPlotQt<TBasePlot>::SavePdf(const TString& path, int newWidth, int newHeight)
 {
     bool res = false;
-    QPrinter printer(QPrinter::ScreenResolution);
+   /* QPrinter printer(QPrinter::ScreenResolution);
     printer.setOutputFileName(STR(path));
     printer.setOutputFormat(QPrinter::PdfFormat);
     printer.setColorMode(QPrinter::Color);
@@ -287,7 +287,7 @@ bool TPlotQt<TBasePlot>::SavePdf(const TString& path, int newWidth, int newHeigh
         painter->end();
         res = true;
     }
-    TBasePlot::SetViewport(oldViewport);
+    TBasePlot::SetViewport(oldViewport);*/
     return res;
 }
 

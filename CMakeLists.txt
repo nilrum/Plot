@@ -20,10 +20,15 @@ set(Plot_SRC
         PlotItems.cpp
         )
 
+if(${QT_GUI})
+    set(Plot_SRC ${Plot_SRC} Qt/PlotQt.cpp)
+    set(Plot_DEPS_INCL ${Plot_DEPS_INCL} ${Qt5Widgets_INCLUDE_DIRS})
+endif()
+
 #Объявление библиотеки
 if(NOT TARGET Plot)
     add_library(Plot STATIC ${Plot_SRC})
-    target_include_directories(Plot PUBLIC ${FETCH_DIR} ${Plot_DEPS_INCL})
+    target_include_directories(Plot PUBLIC ${FETCH_DIR} ${Plot_DEPS_INCL} )
 endif()
 
 if(${BUILD_TEST})
@@ -48,10 +53,6 @@ if(${BUILD_TEST})
     target_link_libraries(PlotTest PUBLIC Plot gtest gtest_main gmock)
     enable_testing()
     add_test(NAME PlotTest COMMAND PlotTest)
-endif()
-
-if(${QT_GUI})
-    set(Plot_SRC ${Plot_SRC} Qt/PlotQt.cpp)
 endif()
 
 #Включаем зависимости для корневого проекта
