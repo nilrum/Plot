@@ -45,15 +45,7 @@ if(${BUILD_TEST})
     add_executable(PlotTest
             tests/PlotTest.cpp
             )
-
-    target_include_directories(PlotTest
-            PUBLIC ${FETCH_DIR}
-            PUBLIC ${Plot_DEPS_INCL}
-            )
     target_link_libraries(PlotTest PUBLIC Plot gtest gtest_main gmock)
     enable_testing()
     add_test(NAME PlotTest COMMAND PlotTest)
 endif()
-
-#Включаем зависимости для корневого проекта
-DepsAvailable()
