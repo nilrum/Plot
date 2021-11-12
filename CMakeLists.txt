@@ -21,8 +21,10 @@ set(Plot_SRC
         )
 
 #Объявление библиотеки
-add_library(Plot STATIC ${Plot_SRC})
-target_include_directories(Plot PUBLIC ${FETCH_DIR} ${Plot_DEPS_INCL})
+if(NOT TARGET Plot)
+    add_library(Plot STATIC ${Plot_SRC})
+    target_include_directories(Plot PUBLIC ${FETCH_DIR} ${Plot_DEPS_INCL})
+endif()
 
 if(${BUILD_TEST})
     message("Build plot test enabled")
@@ -30,8 +32,9 @@ if(${BUILD_TEST})
     if(MSVC)
         set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     endif()
-
-    MakeAvailable(googletest github.com/google/googletest googletest/include)
+    if(NOT TARGET gtest)
+        MakeAvailable(googletest github.com/google/googletest googletest/include)
+    endif()
 
     #Объявим цель тестирования
     add_executable(PlotTest
