@@ -20,9 +20,16 @@ set(Plot_SRC
         PlotItems.cpp
         )
 
+if(${QT_GUI})
+    set(Plot_SRC ${Plot_SRC} Qt/PlotQt.cpp)
+    set(Plot_DEPS_INCL ${Plot_DEPS_INCL} ${Qt5Widgets_INCLUDE_DIRS})
+endif()
+
 #Объявление библиотеки
-add_library(Plot STATIC ${Plot_SRC})
-target_include_directories(Plot PUBLIC ${FETCH_DIR} ${Plot_DEPS_INCL})
+if(NOT TARGET Plot)
+    add_library(Plot STATIC ${Plot_SRC})
+    target_include_directories(Plot PUBLIC ${FETCH_DIR} ${Plot_DEPS_INCL} )
+endif()
 
 if(${BUILD_TEST})
     message("Build plot test enabled")
@@ -30,8 +37,9 @@ if(${BUILD_TEST})
     if(MSVC)
         set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     endif()
-
-    MakeAvailable(googletest github.com/google/googletest googletest/include)
+    if(NOT TARGET gtest)
+        MakeAvailable(googletest github.com/google/googletest googletest/include)
+    endif()
 
     #Объявим цель тестирования
     add_executable(PlotTest
@@ -47,6 +55,5 @@ if(${BUILD_TEST})
     add_test(NAME PlotTest COMMAND PlotTest)
 endif()
 
-if(${QT_GUI})
-    set(Plot_SRC ${Plot_SRC} Qt/PlotQt.cpp)
-endif()
+#Включаем зависимости для корневого проекта
+DepsAvailable()
