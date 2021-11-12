@@ -50,6 +50,3 @@ endif()
 if(${QT_GUI})
     set(Plot_SRC ${Plot_SRC} Qt/PlotQt.cpp)
 endif()
-
-#Включаем зависимости для корневого проекта
-DepsAvailable()
