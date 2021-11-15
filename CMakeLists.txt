@@ -21,7 +21,7 @@ set(Plot_SRC
         )
 
 if(${QT_GUI})
-    set(Plot_SRC ${Plot_SRC} Qt/PlotQt.cpp)
+    set(Plot_SRC ${Plot_SRC} ${LIB_DIR}/Qt/PlotQt.cpp)
     set(Plot_DEPS_INCL ${Plot_DEPS_INCL} ${Qt5Widgets_INCLUDE_DIRS})
 endif()
 
