@@ -27,7 +27,7 @@ endif()
 
 #Объявление библиотеки
 if(NOT TARGET Plot)
-    add_library(Plot STATIC ${Plot_SRC})
+    add_library(Plot OBJECT ${Plot_SRC})
     target_include_directories(Plot PUBLIC ${FETCH_DIR} ${Plot_DEPS_INCL} )
 endif()
 

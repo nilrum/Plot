@@ -690,6 +690,7 @@ void TLayoutElement::CalcInnerRect()
         if(isDefaultInit)
         {
             auto leftAxis = AddAxis(atLeft);
+            leftAxis->SetIsRangeReversed(true);
             auto bottomAxis = AddAxis(atBottom);
             AddDragAxes(bottomAxis, leftAxis);
             AddZoomAxes(bottomAxis, leftAxis);
