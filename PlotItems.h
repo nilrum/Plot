@@ -212,6 +212,19 @@ namespace Plot {
     };
 
     CLASS_PTRS(ItemText)
+
+    class TSelectRect : public TAbstractItem{
+    public:
+        TSelectRect(Plot::TRawPlot plt);
+
+        inline const TRectF& SelectValues() const { return select; }
+        void SetRectPoints(const TPointF& begin, const TPointF& end);
+    protected:
+        TRectF select;
+        void Draw(const TUPtrPainter& painter) override;
+    };
+
+    CLASS_PTRS(SelectRect)
 }
 
 #endif //TESTQT_PLOTITEMS_H

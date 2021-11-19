@@ -34,6 +34,9 @@ namespace Plot {
     class TLayoutGrid;
     CLASS_PTRS(LayoutGrid)
 
+    class TSelectRect;
+    CLASS_PTRS(SelectRect);
+
     class TMarginGroup{
     public:
         TMarginGroup(TOrientation orientation);
@@ -564,6 +567,9 @@ namespace Plot {
         Plot::TRawItemTracer Tracer() const { return tracer.get(); }
         void SetTracer(TRawItemTracer value);
 
+        const TUPtrSelectRect& SelectRect() const;
+        void SetSelectRect();
+
         virtual TPtrPaintBuffer CreatePaintBuffer(const Plot::TSize &sizeBuffer) = 0;
 
         //функция вызывает срабатывание события перерисовать от базовой библиотеки немедлено
@@ -613,6 +619,7 @@ namespace Plot {
         bool replotting = false;
         TColor background = TConsts::WhiteColor();
         TPtrLayer currentLayer;
+        TUPtrSelectRect selectRect;
 
         std::vector<TPtrPlottable> plottables;
         std::vector<TPtrAxisRect> axisRects;

@@ -530,4 +530,19 @@ namespace Plot {
     {
         isEditing = false;
     }
+//----------------------------------------------------------------------------------------------------------------------
+    TSelectRect::TSelectRect(Plot::TRawPlot plt): TAbstractItem(plt, "overlay")
+    {
+
+    }
+
+    void TSelectRect::SetRectPoints(const TPointF &begin, const TPointF &end)
+    {
+        select = TRectF(begin, end);
+    }
+
+    void TSelectRect::Draw(const TUPtrPainter &painter)
+    {
+        painter->FillRect(select, TConsts::SetAlpha(TConsts::BlueColor(), 100));
+    }
 }

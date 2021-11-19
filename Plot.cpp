@@ -772,10 +772,20 @@ void TLayoutElement::CalcInnerRect()
                         lock->SaveDrag();
                 }
         }
+        else
+        {
+            plot->SetSelectRect();
+        }
     }
 
     void TAxisRect::MouseMove(TMouseInfo &info, const TPoint &startPos)
     {
+        if(info.IsMoving() == false && plot->SelectRect())
+        {
+            plot->SelectRect()->SetRectPoints(startPos, info.pos);
+            plot->Replot();
+            return;
+        }
         if(info.IsMoving() == false)
         {
             info.Ignore();
@@ -1978,6 +1988,15 @@ void TLayoutElement::CalcInnerRect()
         title.reset();
     }
 
+    const TUPtrSelectRect &TPlot::SelectRect() const
+    {
+        return selectRect;
+    }
+
+    void TPlot::SetSelectRect()
+    {
+        selectRect = std::make_unique<TSelectRect>(this);
+    }
 
 
     TInitRef::TInitRef(TPlot *p, bool v):plot(p), value(v)
