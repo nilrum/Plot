@@ -833,6 +833,8 @@ namespace Plot {
         inline bool IsMaskColumn() const { return isMaskColumn; }
         void SetIsMaskColumn(bool value);
 
+        inline bool IsLineRuler() const { return isLineRuler; }
+        void SetIsLineRuler(bool value);
     protected:
         TCouplingPlottable(const TPtrAxis& key, const TPtrAxis& val);
         friend TPlot;
@@ -840,6 +842,7 @@ namespace Plot {
         int indDragging = -1;
         double valDragging = 0.;
         bool isMaskColumn = true;
+        bool isLineRuler = true;
 
         void Draw(const TUPtrPainter& painter) override;
         void DrawCoupling(const TUPtrPainter &painter, const TDataRange &seg, const TVecPointF& lines);

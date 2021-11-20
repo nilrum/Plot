@@ -1054,7 +1054,19 @@ namespace Plot {
             painter->DrawPolygon(lines.data() + j, 4);
 
         if(isMaskColumn)
+            painter->Restore();
+
+        if(isLineRuler)
         {
+            painter->Save();
+            painter->SetClipRect(plot->MainLayout()->InnerRect());
+            int xe = plot->MainLayout()->InnerRect().width();
+
+            for (size_t j = 0; j < lines.size(); j += 4)
+            {
+                int y = int(lines[j].y() + (lines[j + 1].y() - lines[j].y()) / 2.);
+                painter->DrawLine(TPoint(0, y), TPoint(xe, y));
+            }
             painter->Restore();
         }
     }
@@ -1080,6 +1092,11 @@ namespace Plot {
     void TCouplingPlottable::SetIsMaskColumn(bool value)
     {
         isMaskColumn = value;
+    }
+
+    void TCouplingPlottable::SetIsLineRuler(bool value)
+    {
+        isLineRuler = value;
     }
 
 //----------------------------------------------------------------------------------------------------------------------
