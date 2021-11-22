@@ -1059,7 +1059,7 @@ namespace Plot {
         if(isLineRuler)
         {
             painter->Save();
-            painter->SetClipRect(plot->MainLayout()->InnerRect());
+            painter->SetClipRect(plot->KeyClipRect());
             int xe = plot->MainLayout()->InnerRect().width();
 
             for (size_t j = 0; j < lines.size(); j += 4)
@@ -1078,7 +1078,7 @@ namespace Plot {
 
         painter->SetPen(p);
         painter->Save();
-        painter->SetClipRect(plot->MainLayout()->InnerRect());
+        painter->SetClipRect(plot->KeyClipRect());
         int xe = this->plot->MainLayout()->InnerRect().width();
         int y = 0;
         for (size_t j = 0; j < lines.size(); j += 4)

@@ -62,13 +62,11 @@ namespace Plot {
         bool IsValid() const { return end >= begin && begin >= 0; }
         bool Empty() const { return Length() == 0; }
 
-
         TDataRange Bounded(const TDataRange &other) const;
         TDataRange Expanded(const TDataRange &other) const;
         TDataRange Intersection(const TDataRange &other) const;
         TDataRange Adjusted(int changeBegin, int changeEnd) const { return TDataRange(begin + changeBegin, end + changeEnd); }
         void Adjust(int changeBegin, int changeEnd) { begin += changeBegin; end += changeEnd; }
-        /*bool intersects(const TDataRange &other) const;*/
         bool Contains(const TDataRange &other) const;
     private:
         int begin;
@@ -87,6 +85,7 @@ namespace Plot {
 
     template<typename T>
     inline bool LessThanSortKey(const T& a, const T& b) { return a.SortKey() < b.SortKey(); }
+
     template<typename T>
     class TDataContainer {
     public:

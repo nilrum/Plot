@@ -517,6 +517,7 @@ namespace Plot {
         inline TRect Viewport() const { return viewport; }
         inline TPtrLayoutGrid PlotLayout() const { return plotLayout; }
         inline TPtrLayoutGrid MainLayout() const { return mainLayout; }
+        virtual TRect KeyClipRect() const { return TRect(); }
 
         virtual void PlotPaint();
         void PlotPaint(const TUPtrPainter& painter);
