@@ -772,20 +772,10 @@ void TLayoutElement::CalcInnerRect()
                         lock->SaveDrag();
                 }
         }
-        else
-        {
-            plot->SetSelectRect();
-        }
     }
 
     void TAxisRect::MouseMove(TMouseInfo &info, const TPoint &startPos)
     {
-        if(info.IsMoving() == false && plot->SelectRect())
-        {
-            plot->SelectRect()->SetRectPoints(startPos, info.pos);
-            plot->Replot();
-            return;
-        }
         if(info.IsMoving() == false)
         {
             info.Ignore();
@@ -1058,21 +1048,35 @@ void TLayoutElement::CalcInnerRect()
         if(label.empty() == false)
         {
             painter->SetFont(fontLabel);
-            int offset = (tickLen + tickLabelOffset + tickLabelHeight + labelOffset) * coef;
-            switch (type)
+            if(labelPos == atCount)
             {
-                case atLeft:
-                    painter->DrawText(TPointF(begin.x() + offset, begin.y() + (end.y() - begin.y()) / 2.), label.c_str(), TAlignText::Begin, TAlignText::Begin, -90);
-                    break;
-                case atTop:
-                    painter->DrawText(TPointF(begin.x() + (end.x() - begin.x()) / 2., begin.y() + offset), label.c_str(), TAlignText::Center, TAlignText::End);
-                    break;
-                case atRight:
-                    painter->DrawText(TPointF(begin.x() + offset, begin.y() + (end.y() - begin.y()) / 2.), label.c_str(), TAlignText::Begin, TAlignText::Begin, 90);
-                    break;
-                case atBottom:
-                    painter->DrawText(TPointF(begin.x() + (end.x() - begin.x()) / 2., begin.y() + offset), label.c_str(), TAlignText::Center);
-                    break;
+                int offset = (tickLen + tickLabelOffset + tickLabelHeight + labelOffset) * coef;
+                switch (type)
+                {
+                    case atLeft:
+                        painter->DrawText(TPointF(begin.x() + offset, begin.y() + (end.y() - begin.y()) / 2.),
+                                          label.c_str(), TAlignText::Begin, TAlignText::Begin, -90);
+                        break;
+                    case atTop:
+                        painter->DrawText(TPointF(begin.x() + (end.x() - begin.x()) / 2., begin.y() + offset),
+                                          label.c_str(), TAlignText::Center, TAlignText::End);
+                        break;
+                    case atRight:
+                        painter->DrawText(TPointF(begin.x() + offset, begin.y() + (end.y() - begin.y()) / 2.),
+                                          label.c_str(), TAlignText::Begin, TAlignText::Begin, 90);
+                        break;
+                    case atBottom:
+                        painter->DrawText(TPointF(begin.x() + (end.x() - begin.x()) / 2., begin.y() + offset),
+                                          label.c_str(), TAlignText::Center);
+                        break;
+                }
+            }
+            else
+            {
+                //пока только одна реализация не стандартного положения метки
+                TRect labelRect(outRect.topLeft(), innerRect.topRight());
+                if(labelRect.height() > 5)
+                    painter->DrawText(labelRect.center(), label, TAlignText::Center, TAlignText::Center);
             }
 
         }
@@ -1591,6 +1595,7 @@ void TLayoutElement::CalcInnerRect()
         plotLayout->AddElement(1, 0, mainLayout);
         if(isDefault)
             AddAxisRect(isDefault);
+        selectRect = std::make_unique<TSelectRect>(this);
     }
 
     TPlot::~TPlot()
@@ -1779,6 +1784,8 @@ void TLayoutElement::CalcInnerRect()
             }
         }
         OnMousePress(info);
+        if(info.IsMoving() == false && info.isAlt)
+            selectRect->SetIsEditing(true);
     }
 
     void TPlot::MouseMove(TMouseInfo &info)
@@ -1791,6 +1798,12 @@ void TLayoutElement::CalcInnerRect()
             signalLayerable->MouseMove(info, mousePressPos);
         }
         OnMouseMove(info);
+        if(selectRect->IsEditinig())
+        {
+            selectRect->SetRectPoints(mousePressPos, info.pos);
+            Replot();
+            return;
+        }
     }
 
     void TPlot::MouseUp(TMouseInfo &info)
@@ -1799,7 +1812,9 @@ void TLayoutElement::CalcInnerRect()
         if(mouseHasMoved == false)
         {
             if(info.IsLeftButton())
+            {
                 MouseSelect(info);
+            }
         }
 
         if(signalLayerable.IsEmpty() == false)
@@ -1809,6 +1824,7 @@ void TLayoutElement::CalcInnerRect()
             OnUserChanged();
         }
         OnMouseUp(info);
+        selectRect->SetIsEditing(false);
     }
 
     void TPlot::MouseDblClick(TMouseInfo &info)
@@ -1850,7 +1866,11 @@ void TLayoutElement::CalcInnerRect()
 
         if(clicked)
             selStateChanged |= clicked->SelectEvent(info, additive);
-
+        if(selectRect->IsEmpty() == false)
+        {
+            selectRect->Clear();
+            selStateChanged = true;
+        }
         if(selStateChanged)
             Replot();
     }
@@ -1998,6 +2018,11 @@ void TLayoutElement::CalcInnerRect()
         selectRect = std::make_unique<TSelectRect>(this);
     }
 
+    void TPlot::ResetSelectRect()
+    {
+        selectRect.reset();
+    }
+
 
     TInitRef::TInitRef(TPlot *p, bool v):plot(p), value(v)
     {
@@ -2094,7 +2119,7 @@ TLegendItemPlottable::TLegendItemPlottable(TRawLegend legend, const TPtrPlottabl
     TLegendItem(legend), plottable(ptrPlottable)
 {
     ptrPlottable->OnSelectionChanged.connect([this](bool value){ SetIsSelected(value); });
-    OnSelectionChanged.connect([p = ptrPlottable.get()](bool value){ p->SetIsSelect(value); });
+    OnSelectionChanged.connect([p = ptrPlottable.get()](bool value){ p->SetIsSelected(value); });
 }
 
 void TLegendItemPlottable::Draw(const TUPtrPainter &painter)

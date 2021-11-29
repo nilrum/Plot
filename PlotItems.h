@@ -217,10 +217,18 @@ namespace Plot {
     public:
         TSelectRect(Plot::TRawPlot plt);
 
+        bool IsEditinig() const;
+        void SetIsEditing(bool value);
+
+        void Clear();
+
+        inline bool IsEmpty() const { return select.isNull(); }
+
         inline const TRectF& SelectValues() const { return select; }
         void SetRectPoints(const TPointF& begin, const TPointF& end);
     protected:
         TRectF select;
+        bool isEditing = false;
         void Draw(const TUPtrPainter& painter) override;
     };
 

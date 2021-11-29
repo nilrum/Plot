@@ -248,7 +248,7 @@ namespace Plot {
         }
     }
 
-    bool TAbstractPlottable::SetIsSelect(bool value)
+    bool TAbstractPlottable::SetIsSelected(bool value)
     {
         return SetSelection(value ? TDataRange(0, 1) : TDataRange(0, 0));
     }
@@ -276,10 +276,7 @@ namespace Plot {
 
     void TGraph::Draw(const TUPtrPainter &painter)
     {
-        if(typeGraph == tgLine)
-            DrawTemplate<true>(painter, this, &TGraph::DrawLine, &TGraph::DrawLine);
-        else
-            DrawTemplate<false>(painter, this, &TGraph::DrawColumn, &TGraph::DrawColumn);
+        DrawTemplate<true>(painter, this, &TGraph::DrawLine, &TGraph::DrawLine);
     }
 
     TVecPointF TGraph::GetLines(const TDataRange &dataRange)
@@ -896,7 +893,19 @@ namespace Plot {
     void TGraph::MousePress(TMouseInfo &info)
     {
         if(editInter == nullptr)
-            TLayerable::MousePress(info);
+        {
+            if(info.IsLeftButton() && IsSelected() && info.IsMoving() && typeGraph != tgLine)
+            {
+                plot->SetCursor(ctVDrag);
+                indDragging = selection.DataRanges()[0].Begin();
+                valDragging = (data->ConstBegin() + indDragging)->key;
+            }
+            else
+            {
+                indDragging = -1;
+                TAbstractPlottable1D<TGraphData>::MousePress(info);
+            }
+        }
         else
             editInter->MousePress(info);
     }
@@ -904,7 +913,15 @@ namespace Plot {
     void TGraph::MouseMove(TMouseInfo &info, const TPoint &startPos)
     {
         if(editInter == nullptr)
-            TLayerable::MouseMove(info, startPos);
+        {
+            if(indDragging != -1)
+            {
+                auto key = keyAxis.lock().get();
+                (data->Begin() + indDragging)->key = valDragging + key->PixelToCoord(info.pos.y()) - key->PixelToCoord(startPos.y());
+
+                plot->Replot();
+            }
+        }
         else
             editInter->MouseMove(info, startPos);
     }
@@ -912,7 +929,16 @@ namespace Plot {
     void TGraph::MouseUp(TMouseInfo &info, const TPoint &startPos)
     {
         if(editInter == nullptr)
-            TLayerable::MouseUp(info, startPos);
+        {
+            if(indDragging != -1)
+            {
+                double k = (data->Begin() + indDragging)->key;
+                if (k != valDragging)
+                    OnValueDragged(indDragging, k, (data->Begin() + indDragging)->val);
+                plot->SetCursor(ctDefault);
+                indDragging = -1;
+            }
+        }
         else
             editInter->MouseUp(info, startPos);
     }
@@ -995,46 +1021,29 @@ namespace Plot {
     {
         otherBrush = value;
     }
+//----------------------------------------------------------------------------------------------------------------------
+    TColumnPlottable::TColumnPlottable(const TPtrAxis &key, const TPtrAxis &val) : TGraph(key, val, tgColumn)
+    {
+
+    }
+
+    void TColumnPlottable::Draw(const TUPtrPainter &painter)
+    {
+        DrawTemplate<false>(painter, this, &TColumnPlottable::DrawColumn, &TColumnPlottable::DrawColumn);
+    }
+
+    void TColumnPlottable::DrawColumn(const TUPtrPainter &painter, const TDataRange &seg, const TVecPointF& lines)
+    {
+        painter->SetBrush(brush);
+        painter->DrawPolygon(lines);
+    }
+
+
 
 //----------------------------------------------------------------------------------------------------------------------
     TCouplingPlottable::TCouplingPlottable(const TPtrAxis& key, const TPtrAxis& val) : TGraph(key, val, tgCoupling)
     {
 
-    }
-
-    void TCouplingPlottable::MousePress(TMouseInfo &info)
-    {
-        if(info.IsLeftButton() && IsSelected() && info.IsMoving())
-        {
-            plot->SetCursor(ctVDrag);
-            indDragging = selection.DataRanges()[0].Begin();
-            valDragging = (data->ConstBegin() + indDragging)->key;
-        }
-        else
-            indDragging = -1;
-    }
-
-    void TCouplingPlottable::MouseMove(TMouseInfo &info, const TPoint &startPos)
-    {
-        if(indDragging != -1)
-        {
-            auto key = keyAxis.lock().get();
-            (data->Begin() + indDragging)->key = valDragging + key->PixelToCoord(info.pos.y()) - key->PixelToCoord(startPos.y());
-
-            plot->Replot();
-        }
-    }
-
-    void TCouplingPlottable::MouseUp(TMouseInfo &info, const TPoint &startPos)
-    {
-        if(indDragging != -1)
-        {
-            double k = (data->Begin() + indDragging)->key;
-            if (k != valDragging)
-                OnValueDragged(indDragging, k, (data->Begin() + indDragging)->val);
-            plot->SetCursor(ctDefault);
-            indDragging = -1;
-        }
     }
 
     void TCouplingPlottable::Draw(const TUPtrPainter &painter)
@@ -1728,4 +1737,6 @@ namespace Plot {
             }
         }
     }
+
+
 }

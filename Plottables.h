@@ -565,7 +565,7 @@ namespace Plot {
         inline const TDataSelection& Selection() const { return selection;};
         inline TDataSelection& Selection() { return selection; };
         bool SetSelection(TDataSelection value);
-        bool SetIsSelect(bool value);
+        bool SetIsSelected(bool value);
 
         void SetSelectable(TSelectionType value) { selectable = value; }
 
@@ -734,6 +734,9 @@ namespace Plot {
         double baseFillPoint = 0;
         TBrush otherBrush{bsNone};
         TWPtrGraph fillGraph;
+        int indDragging = -1;
+        double valDragging = 0.;
+
         void Draw(const TUPtrPainter& painter) override;
 
         void GetVisibleDataBounds(TDataContainerGraph::TConstIterator &begin, TDataContainerGraph::TConstIterator &end,
@@ -806,11 +809,6 @@ namespace Plot {
             painter->SetBrush(bsNone);
             DrawPolyLine(painter, lines);
         }
-        void DrawColumn(const TUPtrPainter &painter, const TDataRange &seg, const TVecPointF& lines)
-        {
-            painter->SetBrush(brush);
-            painter->DrawPolygon(lines);
-        }
 
         template<bool IsFill, typename TPtr, typename TFun>
         void DrawTemplate(const TUPtrPainter &painter, TPtr* ptr, const TFun& drawUnsel, const TFun& drawSel)
@@ -823,12 +821,16 @@ namespace Plot {
         }
     };
 
+    class TColumnPlottable : public TGraph{
+    protected:
+        TColumnPlottable(const TPtrAxis& key, const TPtrAxis& val);
+        friend TPlot;
+        void Draw(const TUPtrPainter& painter) override;
+        void DrawColumn(const TUPtrPainter &painter, const TDataRange &seg, const TVecPointF& lines);
+    };
+
     class TCouplingPlottable : public TGraph{
     public:
-        void MousePress(TMouseInfo& info) override;
-        void MouseMove(TMouseInfo& info, const TPoint& startPos) override;
-        void MouseUp( TMouseInfo& info, const TPoint& startPos) override;
-
         inline bool IsMaskColumn() const { return isMaskColumn; }
         void SetIsMaskColumn(bool value);
 
@@ -838,8 +840,6 @@ namespace Plot {
         TCouplingPlottable(const TPtrAxis& key, const TPtrAxis& val);
         friend TPlot;
 
-        int indDragging = -1;
-        double valDragging = 0.;
         bool isMaskColumn = true;
         bool isLineRuler = true;
 

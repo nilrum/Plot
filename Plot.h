@@ -346,6 +346,10 @@ namespace Plot {
         void SetFontTicks(const TFont& value);
 
         const TVecDouble& TickPositions() const { return tickPositions; }
+
+        inline TAxisType LabelPos() const { return labelPos; }
+        inline void SetLabelPos(TAxisType value) { labelPos = value; }
+
         const TVecDouble& SubTickPositions() const { return subTickPositions; }
 
         bool Contains(const TPointF& value) const;
@@ -387,6 +391,7 @@ namespace Plot {
         bool isSelected = false;
         bool isSelectable = true;
         TAxisType type;
+        TAxisType labelPos = atCount;
         TOrientation orient;
         TScaleType scaleType = stLinear;
         TString label;
@@ -569,7 +574,6 @@ namespace Plot {
         void SetTracer(TRawItemTracer value);
 
         const TUPtrSelectRect& SelectRect() const;
-        void SetSelectRect();
 
         virtual TPtrPaintBuffer CreatePaintBuffer(const Plot::TSize &sizeBuffer) = 0;
 
@@ -658,6 +662,9 @@ namespace Plot {
         TRawLayerable FindLayerable(const TPointF& pos, bool onlySelectable);
         void MouseSelect(TMouseInfo& info);
         virtual TSize CheckSize(const TSize& newSize){ return newSize; }
+
+        void SetSelectRect();
+        void ResetSelectRect();
     private:
         friend class TLayer;
         friend class TLayerable;

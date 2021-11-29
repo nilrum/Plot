@@ -320,6 +320,8 @@ namespace Plot {
 
     void TItemBorder::Draw(const TUPtrPainter &painter)
     {
+        painter->Save();
+        painter->SetClipRect(isMaskRect ? position.KeyAxis()->AxisRect()->CentralRect() :  plot->KeyClipRect());
         painter->SetPen(isSelected ? selPen : itemPen);
         painter->SetBrush(TBrush());
         TPointF begin, end;
@@ -348,6 +350,7 @@ namespace Plot {
                 break;
             }
         }
+        painter->Restore();
     }
 
     double TItemBorder::SelectTest(const TPointF &pos, bool onlySelectable)
@@ -362,7 +365,7 @@ namespace Plot {
     void TItemBorder::GetPosLine(TPointF &begin, TPointF &end)
     {
         TPointF pos = position.PixelPosition();
-        TRectF r = isMaskRect ? position.KeyAxis()->AxisRect()->CentralRect() : plot->Viewport();
+        TRectF r = plot->Viewport();
         if(position.KeyAxis()->Orientation() == orVert)
         {
             begin = TPointF(r.left(), pos.y()),
@@ -544,5 +547,20 @@ namespace Plot {
     void TSelectRect::Draw(const TUPtrPainter &painter)
     {
         painter->FillRect(select, TConsts::SetAlpha(TConsts::BlueColor(), 100));
+    }
+
+    bool TSelectRect::IsEditinig() const
+    {
+        return isEditing;
+    }
+
+    void TSelectRect::SetIsEditing(bool value)
+    {
+        isEditing = value;
+    }
+
+    void TSelectRect::Clear()
+    {
+        select = TRectF();
     }
 }
