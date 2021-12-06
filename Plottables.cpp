@@ -477,7 +477,7 @@ namespace Plot {
         TVecPointF res(value.size() * 4);
         double x1 = 0, x2 = 0;
         double y1 = 0, y2 = 0;
-        double maxVal = 500;//если кривой от которой зависим нет то берем константу по ширине
+        double maxVal = val->Range().Size() / 2;//если кривой от которой зависим нет, то берем константу по ширине
         if(fillGraph.expired() == false)
             maxVal = fillGraph.lock()->data->ValRange().upper * 1.2;
 
@@ -1058,26 +1058,47 @@ namespace Plot {
             painter->Save();
             painter->SetClipPolygon(FillGraph()->GetLines(seg), true);
         }
-
+        painter->SetBrush(brush);
         for(size_t j = 0; j < lines.size(); j += 4)
             painter->DrawPolygon(lines.data() + j, 4);
+        painter->SetBrush(TBrush(bsNone));
 
         if(isMaskColumn)
             painter->Restore();
 
-        if(isLineRuler)
+        if(isLineRuler || isDeltaCoupling)
         {
             painter->Save();
             painter->SetClipRect(plot->KeyClipRect());
-            int xe = plot->MainLayout()->InnerRect().width();
+        }
 
+        if(isLineRuler)
+        {
+            int xe = plot->MainLayout()->InnerRect().width();
+            painter->SetPen(pen);
             for (size_t j = 0; j < lines.size(); j += 4)
             {
                 int y = int(lines[j].y() + (lines[j + 1].y() - lines[j].y()) / 2.);
                 painter->DrawLine(TPoint(0, y), TPoint(xe, y));
             }
-            painter->Restore();
         }
+
+        if(isDeltaCoupling)
+        {
+            auto k = keyAxis.lock();
+            for (size_t j = 4; j < lines.size(); j += 4)
+            {
+                auto b = lines[j - 4].y() + (lines[j - 4 + 1].y() - lines[j - 4].y());
+                auto e = lines[j].y() + (lines[j + 1].y() - lines[j].y());
+                auto y = b + (e - b) / 2.;
+                auto val = k->PixelToCoord(e) - k->PixelToCoord(b);
+                auto x = lines[j].x() + (lines[j + 2].x() - lines[j].x()) / 2.;
+                painter->DrawText(TPointF(x, y), STDFORMAT("%.2f", val), TAlignText::Center, TAlignText::Center);
+            }
+        }
+
+        if(isLineRuler || isDeltaCoupling)
+            painter->Restore();
     }
 
     void TCouplingPlottable::DrawCouplingSel(const TUPtrPainter &painter, const TDataRange &seg, const TVecPointF &lines)
@@ -1106,6 +1127,11 @@ namespace Plot {
     void TCouplingPlottable::SetIsLineRuler(bool value)
     {
         isLineRuler = value;
+    }
+
+    void TCouplingPlottable::SetIsDeltaCoupling(bool value)
+    {
+        isDeltaCoupling = value;
     }
 
 //----------------------------------------------------------------------------------------------------------------------

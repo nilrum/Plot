@@ -836,12 +836,16 @@ namespace Plot {
 
         inline bool IsLineRuler() const { return isLineRuler; }
         void SetIsLineRuler(bool value);
+
+        inline bool IsDeltaCoupling() const { return isDeltaCoupling; }
+        void SetIsDeltaCoupling(bool value);
     protected:
         TCouplingPlottable(const TPtrAxis& key, const TPtrAxis& val);
         friend TPlot;
 
         bool isMaskColumn = true;
         bool isLineRuler = true;
+        bool isDeltaCoupling = true;
 
         void Draw(const TUPtrPainter& painter) override;
         void DrawCoupling(const TUPtrPainter &painter, const TDataRange &seg, const TVecPointF& lines);
