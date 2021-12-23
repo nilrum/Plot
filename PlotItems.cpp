@@ -245,19 +245,21 @@ namespace Plot {
             if(textPosition.x() != INT_MAX) center = textPosition;
 
             auto widthText = painter->WidthText(text);
-            //по умолчанию текст центруется и выше курсора на 20 пикселей
-            TPointF offset(-widthText / 2., -20);
+            auto heightText = painter->HeightText(text);
+            //по умолчанию текст центруется и ниже курсора на 20 пикселей
+            TPointF offset(-widthText / 2., 20);
             if(gr && gr-> ValAxis() && gr->ValAxis()->AxisRect())
             {
                 TRect r = gr->ValAxis()->AxisRect()->CentralRect();
-                if(center.y() + offset.y() - 10 < r.top())
-                    offset.setY(10);
+                if(center.y() + offset.y() + heightText > r.bottom())
+                    offset.setY(-heightText);
                 if(center.x() + offset.x() - 10 < r.left())
                     offset.setX(10);
                 if(center.x() - offset.x() + 10 > r.right())
                     offset.setX(-(widthText + 10));
             }
             painter->SetBrush(TBrush(TConsts::WhiteColor()));
+            //painter->SetFont(TFont(fsBold));
             painter->DrawText(center + offset, text);
         }
     }

@@ -1123,6 +1123,7 @@ void TLayoutElement::CalcInnerRect()
             if(isRoundRange)
                 step = std::ceil(step);//округлим шаг в большую сторону
         }
+
         Invalidate();
     }
 
@@ -1380,7 +1381,10 @@ void TLayoutElement::CalcInnerRect()
             if(orient == orVert) diff = PixelToCoord(startPos.y()) - PixelToCoord(curPos.y());
             else diff = PixelToCoord(startPos.x()) - PixelToCoord(curPos.x());
 
-            SetRange(bufferDrag.lower + diff, asLower);
+            if(step > 1.)
+                SetRange(bufferDrag.lower + diff, asLower);
+            else
+               range.lower = bufferDrag.lower + diff;
         }
         else
         {
@@ -1398,7 +1402,24 @@ void TLayoutElement::CalcInnerRect()
             newRange.lower = (range.lower - center) * factor + center;
             newRange.upper = (range.upper - center) * factor + center;
 
-            SetRange(newRange, true);
+            //SetRange(newRange, true);
+
+            step = step / range.Size();//сохраним коэффициент шага
+            range = newRange;
+            step = range.Size() * step;
+            if(isRoundRange)
+            {
+                if(factor > 1. && step > 1.)
+                {
+                    range.lower = std::ceil(range.lower);
+                    step = std::ceil(step);
+                }
+                else if(factor < 1. && step > 1.)
+                {
+                    range.lower = std::floor(range.lower);
+                    step = std::floor(step);
+                }
+            }
         }
         else
         {
@@ -1635,19 +1656,20 @@ void TLayoutElement::CalcInnerRect()
 
     void TPlot::MoveLayerAfter(const TString &moveLayer, const TString &afterLayer)
     {
-        int move = -1;
-        auto after = -1;
-        int i = 0;
-        for(const auto& l : layers)
-        {
-            if(l->Name() == moveLayer)
-                move = i;
-            if(l->Name() == afterLayer)
-                move = i;
-            i++;
+        auto moveIt = std::find_if(layers.begin(), layers.end(), [&moveLayer](const TPtrLayer& l) { return l->Name() == moveLayer; });
+        if(moveIt == layers.end()) return;
+        auto num = moveIt - layers.begin();
+        auto movePtr = *moveIt;
+        layers.erase(moveIt);
+
+        auto afterIt = std::find_if(layers.begin(), layers.end(), [&afterLayer](const TPtrLayer& l) { return l->Name() == afterLayer; });
+        if(afterIt == layers.end())
+        {//вариант когда слой после которого должны были добавить не найден, то просто вставляем на прежнее место
+            layers.insert(layers.begin() + num, movePtr);
+            return;
         }
-        if(move == -1 || after == -1 || move == after) return;
-        std::swap(layers[move], layers[after]);
+
+        layers.insert(afterIt + 1, movePtr);
     }
 
     const TPtrLayer &TPlot::CurrentLayer() const
@@ -1854,15 +1876,7 @@ void TLayoutElement::CalcInnerRect()
         bool selStateChanged = false;
         bool additive = info.IsMultiSelect();//TODO check multiSelect
         if(additive == false)
-        {
-            for(const auto& lay : layers)
-            {
-                const TVecLayerable& children = lay->Children();
-                for(const auto& child : children)
-                    if(child != clicked)
-                        selStateChanged |= child->DeselectEvent();
-            }
-        }
+            selStateChanged = ResetSelected(clicked);
 
         if(clicked)
             selStateChanged |= clicked->SelectEvent(info, additive);
@@ -1873,6 +1887,19 @@ void TLayoutElement::CalcInnerRect()
         }
         if(selStateChanged)
             Replot();
+    }
+
+    bool TPlot::ResetSelected(TRawLayerable clicked)
+    {
+        bool selStateChanged = false;
+        for(const auto& lay : layers)
+        {
+            const TVecLayerable& children = lay->Children();
+            for(const auto& child : children)
+                if(child != clicked)
+                    selStateChanged |= child->DeselectEvent();
+        }
+        return selStateChanged;
     }
 
     TVecLayerable TPlot::FindLayerableList(const TPointF &pos, bool onlySelectable)
@@ -2022,6 +2049,8 @@ void TLayoutElement::CalcInnerRect()
     {
         selectRect.reset();
     }
+
+
 
 
     TInitRef::TInitRef(TPlot *p, bool v):plot(p), value(v)

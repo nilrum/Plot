@@ -573,6 +573,8 @@ namespace Plot {
         Plot::TRawItemTracer Tracer() const { return tracer.get(); }
         void SetTracer(TRawItemTracer value);
 
+        bool ResetSelected(TRawLayerable clicked = nullptr);
+
         const TUPtrSelectRect& SelectRect() const;
 
         virtual TPtrPaintBuffer CreatePaintBuffer(const Plot::TSize &sizeBuffer) = 0;

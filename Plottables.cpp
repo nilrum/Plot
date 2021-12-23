@@ -1085,13 +1085,14 @@ namespace Plot {
 
         if(isDeltaCoupling)
         {
+            painter->SetPen(pen);
             auto k = keyAxis.lock();
             for (size_t j = 4; j < lines.size(); j += 4)
             {
                 auto b = lines[j - 4].y() + (lines[j - 4 + 1].y() - lines[j - 4].y());
                 auto e = lines[j].y() + (lines[j + 1].y() - lines[j].y());
                 auto y = b + (e - b) / 2.;
-                auto val = k->PixelToCoord(e) - k->PixelToCoord(b);
+                auto val = std::fabs(k->PixelToCoord(e) - k->PixelToCoord(b));
                 auto x = lines[j].x() + (lines[j + 2].x() - lines[j].x()) / 2.;
                 painter->DrawText(TPointF(x, y), STDFORMAT("%.2f", val), TAlignText::Center, TAlignText::Center);
             }

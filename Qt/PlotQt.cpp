@@ -252,14 +252,14 @@ void TPainterQt::DrawText(const Plot::TPointF &p, const TString &value, Plot::TA
         else
             translate((textRect.left() + textRect.height()), textRect.top() - textRect.width() / 2.);
         rotate(rotateVal);
-        drawText(0, 0, textRect.width(), textRect.height(), Qt::TextDontClip, value.c_str());
+        drawText(0, 0, textRect.width(), textRect.height(), Qt::TextDontClip, STR(value));
         setTransform(oldTransform);
     }
     else
     {
         if(brush().style() != Qt::NoBrush)
             fillRect(textRect, brush());
-        drawText(textRect.left(), textRect.top(), textRect.width(), textRect.height(), Qt::TextDontClip, value.c_str());
+        drawText(textRect.left(), textRect.top(), textRect.width(), textRect.height(), Qt::TextDontClip, QVariant(STR(value)).toString());
     }
 }
 
