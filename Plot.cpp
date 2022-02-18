@@ -2320,5 +2320,15 @@ void TLegendItemPlottable::Draw(const TUPtrPainter &painter)
         sizeRuler = value;
     }
 
+    double TRuler::PixToSm(size_t dpi, int pix)
+    {
+        return pix / (dpi / 2.54);
+    }
+
+    int TRuler::SmToPix(size_t dpi, double sm)
+    {
+        return sm * (dpi / 2.54);
+    }
+
 
 }

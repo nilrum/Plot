@@ -138,7 +138,7 @@ namespace Plot {
                 if(preallocSize < 1)
                     PreallocateGrow(1);
                 --preallocSize;
-                *Begin() = data;
+                *Begin() = value;
             }
             else
             {
@@ -438,6 +438,7 @@ namespace Plot {
     public:
         const TPen& Pen() const { return pen; }
         TPen& Pen() { return pen; }
+        const TBrush& Brush() const { return brush; }
         void SetPen(const TPen& value){ pen = value; }
         void SetBrush(const TBrush& value){ brush = value; }
         void ApplyBrush(const TUPtrPainter & painter)
@@ -557,6 +558,7 @@ namespace Plot {
         Plot::TPointF CoordToPixel(double key, double val);
         void PixelToCoords(const TPointF& pos, double& key, double& val);
         double PixelToKey(const TPointF& pos);
+        double PixelToVal(const TPointF& pos);
 
         inline TPtrAxis KeyAxis() const { return keyAxis.lock(); }
         inline TPtrAxis ValAxis() const { return valAxis.lock(); }
@@ -582,7 +584,9 @@ namespace Plot {
         virtual TRange GetKeyRange(bool* founded, TSigDomain sig = sdBoth) const { return TRange(); };
         virtual TRange GetValRange(bool* founded, TSigDomain sig = sdBoth, const TRange& inRange = TRange()) const { return TRange(); };
 
-        virtual void RescaleValueAxis(bool onlyErlange = false, bool inKeyRange = false);
+        virtual void RescaleValueAxis(bool onlyErlange, bool inKeyRange);
+        inline void RescaleValueAxis() { RescaleValueAxis(false, false); }
+
         bool IsAntiAliasing() const override { return true; }
 
         virtual bool SelectEvent(TMouseInfo& info, bool additive) override;
@@ -622,8 +626,8 @@ namespace Plot {
         using TPtrPlottableData = std::shared_ptr<TPlottableData>;
         const TPtrPlottableData& Data() const { return data; };
 
-        virtual TRange GetKeyRange(bool* founded, TSigDomain sig = sdBoth) const;
-        virtual TRange GetValRange(bool* founded, TSigDomain sig = sdBoth, const TRange& inRange = TRange()) const;
+        TRange GetKeyRange(bool* founded, TSigDomain sig = sdBoth) const override;
+        TRange GetValRange(bool* founded, TSigDomain sig = sdBoth, const TRange& inRange = TRange()) const override;
     protected:
         std::shared_ptr<TDataContainer<T>> data;
         void GetDataSegments(TVecDataRange &selSegments, TVecDataRange &unselSegments) const;
@@ -759,7 +763,7 @@ namespace Plot {
 
         TVecPointF GetChannelFillPolygon(const TVecPointF &thisData, const TDataRange &thisRange, const TVecPointF &otherData,
                               const TDataRange &otherRange);
-        double PointDistance(const TPointF& pos, TDataContainerGraph::TConstIterator& iter);
+        virtual double PointDistance(const TPointF& pos, TDataContainerGraph::TConstIterator& iter);
 
         bool CheckIsDraw() const;
         template<bool IsFill, typename TPtr, typename TFun>
@@ -827,6 +831,11 @@ namespace Plot {
         friend TPlot;
         void Draw(const TUPtrPainter& painter) override;
         void DrawColumn(const TUPtrPainter &painter, const TDataRange &seg, const TVecPointF& lines);
+        void DrawSelColumn(const TUPtrPainter &painter, const TDataRange &seg, const TVecPointF& lines);
+
+        double PointDistance(const TPointF& pos, TDataContainerGraph::TConstIterator& iter) override;
+
+        void DrawPolygonSplit(const TUPtrPainter &painter, const TVecPointF& lines);
     };
 
     class TCouplingPlottable : public TGraph{

@@ -225,6 +225,15 @@ namespace Plot {
             return KeyAxis()->PixelToCoord(pos.x());
     }
 
+    double TAbstractPlottable::PixelToVal(const TPointF &pos)
+    {
+        if(valAxis.expired()) return 0;
+        if(ValAxis()->Orientation() == orVert)
+            return ValAxis()->PixelToCoord(pos.y());
+        else
+            return ValAxis()->PixelToCoord(pos.x());
+    }
+
     void TAbstractPlottable::RescaleValueAxis(bool onlyErlange, bool inKeyRange)
     {
         if(keyAxis.expired() || valAxis.expired()) return;
@@ -260,8 +269,6 @@ namespace Plot {
         editInter = value;
         if(editInter) editInter->SetPlottable(this);
     }
-
-
 
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -435,35 +442,60 @@ namespace Plot {
 
         if(key == nullptr || val == nullptr) return TVecPointF();
         size_t count = value.size();//количество точек в колонне
-        TVecPointF res(count * 2 + 1);//столько же точек с другой стороны плюс одна, чтобы закрыть крышку
+        TVecPointF res((count - 1) * 4 + 1);//столько же точек с другой стороны плюс одна, чтобы закрыть крышку
+        auto r = res.begin();
         if(key->Orientation() == orVert)
         {
-            for (size_t i = 0; i < count; i++)//считаем по положительной стороне
+            auto notNan = value.end();
+            auto d = value.begin();
+            do
             {
-                res[i].setX(val->CoordToPixel(value[i].val));
-                res[i].setY(key->CoordToPixel(value[i].key));
-            }
-            for (size_t i = 0; i < count; i++)//считаем по отриц стороне
-            {
-                res[i + count].setX(val->CoordToPixel(-value[count - 1 - i].val));
-                res[i + count].setY(res[count - 1 - i].y());
-            }
-            res.back() = res.front();//последнюю точку дублируем на начальную(закрываем крышку)
+                if(std::isnan(d->val) == false && d != value.end() - 1)//если встретили нулевую точку и есть точка которая была не нулевая
+                {
+                    if(notNan == value.end()) notNan = d;//сохраняем первую не нулевую точку
+                    r->setX(val->CoordToPixel(d->val));//берем первую точку как есть
+                    r->setY(key->CoordToPixel(d->key));
+                    r++;
+                    r->setX(val->CoordToPixel(d->val));//берем первую точку как есть
+                    r->setY(key->CoordToPixel((d + 1)->key));
+                    r++;
+                }
+                else
+                {
+                    if(notNan != value.end())//если были не пустые точки, то сделаем вторую сторону
+                    {
+                        for (auto rd = d; rd != notNan; rd--)
+                        {
+                            r->setY(key->CoordToPixel((rd)->key));
+                            r->setX(val->CoordToPixel(-(rd - 1)->val));
+                            r++;
+                            r->setY(key->CoordToPixel((rd - 1)->key));
+                            r->setX(val->CoordToPixel(-(rd - 1)->val));
+                            r++;
+                        }
+                        r->setY(key->CoordToPixel(notNan->key));
+                        r->setX(val->CoordToPixel(notNan->val));
+                        r++;
+                        notNan = value.end();//пока что больше нет
+
+                        if(d != value.end() - 1)//если это не последний участок, то добавим
+                        {
+                            r->Set(NAN, NAN);
+                            r++;
+                        }
+
+                    }
+                }
+                d++;
+            }while (d != value.end());
         }
         else
         {
-            for (size_t i = 0; i < count; i++)
-            {
-                res[i].setX(key->CoordToPixel(value[i].key));
-                res[i].setY(val->CoordToPixel(value[i].val));
-            }
-            for (size_t i = 0; i < count; i++)
-            {
-                res[i + count].setX(res[count - 1 - i].x());
-                res[i + count].setY(val->CoordToPixel(-value[count - 1 - i].val));
-            }
-            res.back() = res.front();
+            //TODO
         }
+
+        if(r < res.end())
+            res.erase(r, res.end());
         return res;
     }
 
@@ -1029,14 +1061,68 @@ namespace Plot {
 
     void TColumnPlottable::Draw(const TUPtrPainter &painter)
     {
-        DrawTemplate<false>(painter, this, &TColumnPlottable::DrawColumn, &TColumnPlottable::DrawColumn);
+        DrawTemplate<false>(painter, this, &TColumnPlottable::DrawColumn, &TColumnPlottable::DrawSelColumn);
     }
 
     void TColumnPlottable::DrawColumn(const TUPtrPainter &painter, const TDataRange &seg, const TVecPointF& lines)
     {
         painter->SetBrush(brush);
-        painter->DrawPolygon(lines);
+        DrawPolygonSplit(painter, lines);
     }
+
+    void TColumnPlottable::DrawSelColumn(const TUPtrPainter &painter, const TDataRange &seg, const TVecPointF &lines)
+    {
+        if(selDecorator && selDecorator->Brush().style != bsNone) selDecorator->ApplyBrush(painter);
+        else painter->SetBrush(brush);
+        DrawPolygonSplit(painter, lines);
+    }
+    void TColumnPlottable::DrawPolygonSplit(const TUPtrPainter &painter, const TVecPointF &lines)
+    {
+        size_t count = 0;
+        for(auto i = 0; i < lines.size(); i++)
+        {
+            const auto& p = lines[i];
+            if(std::isnan(p.y()) || std::isnan(p.x()))
+            {
+                painter->DrawPolygon(lines.data() + (i - count), count);
+                count = 0;
+            }
+            else
+                ++count;
+        }
+        if(count)
+            painter->DrawPolygon(lines.data() + lines.size() - count, count);
+    }
+
+    double TColumnPlottable::PointDistance(const TPointF& pos, TDataContainerGraph::TConstIterator& iter)
+    {
+        iter = data->ConstEnd();
+        if(data->IsEmpty()) return -1;
+
+        double minDist = std::numeric_limits<double>::max();
+        double posMin = PixelToKey(pos - plot->TolerancePoint());
+        double posMax = PixelToKey(pos + plot->TolerancePoint());
+        double posVal = std::fabs(PixelToVal(pos));
+
+        if(posMin > posMax) std::swap(posMin, posMax);
+
+        auto begin = data->FindBegin(posMin, true);//для верхней нужно брать меньшее значение, поэтому true
+        auto end = data->FindEnd(posMax, false);//для нижней границы гарантированно большее значение, поэтому дополнит эл смысла брать нет
+
+        for(auto it = begin; it != end; it++)
+        {
+            if(posVal > it->val || std::isnan(it->val)) continue;
+            double curDist = plot->SelectionTolerance() * (posVal / it->val);
+            if(curDist < minDist)
+            {
+                minDist = curDist;
+                iter = it;
+            }
+        }
+        if(minDist == std::numeric_limits<double>::max()) return -1;
+        return std::sqrt(minDist);
+    }
+
 
 
 

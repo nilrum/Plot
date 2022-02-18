@@ -192,16 +192,6 @@ namespace Plot {
         template<bool isCol = true>
         void MoveColOrRow(size_t opos, size_t npos, size_t fix)
         {
-            /*//need check indexes for range arrays
-            if constexpr(isCol)
-            {
-                auto el = elements[fix][opos];  //сохраняем элемент, который двигаем
-                int chg = opos > npos ? -1 : 1;
-                for(int i = opos; i != npos; i += chg)
-                    elements[fix][i] = elements[fix][i + chg];
-                elements[fix][npos] = el;//присваиваем перемещенный элемент
-            }*/
-
             TakeAndMove(elements, opos, npos, TIndexerMatrix<decltype(elements), isCol>{fix});
         }
 
@@ -429,7 +419,7 @@ namespace Plot {
         TVecDouble tickPositions;
         TVecDouble subTickPositions;
 
-        size_t subTickCount = 2;
+        size_t subTickCount = 3;
         size_t countAfterPoint = 2;
 
         virtual void CalculateTicker(TVecDouble& ticks, TVecDouble& subTicks, TVecString& labels);
@@ -615,6 +605,7 @@ namespace Plot {
         virtual TSize CalcSaveSize() const { return TSize(); }
         virtual bool SavePdf(const TString& path, int newWidth, int newHeight){ return false; };
         virtual bool SavePng(const TString& path, int newWidth, int newHeight){ return false; };
+        virtual TPoint Dpi() const { return TPoint(); }
     protected:
         int isInitState = 0;
         TRect viewport;
@@ -811,6 +802,8 @@ namespace Plot {
 
         void Draw(const TUPtrPainter& painter);     //нарисовать рулетку в зависимости от настроек
 
+        static double PixToSm(size_t dpi, int pix);
+        static int SmToPix(size_t dpi, double sm);
     private:
         bool isVisible = false;
         TTypeRuler typeRuler = TTypeRuler::Meter;//TTypeRuler::Inch;//
